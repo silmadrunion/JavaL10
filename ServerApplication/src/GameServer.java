@@ -1,23 +1,49 @@
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GameServer {
 
-    private ServerSocket sock = null; //required ServerSocket
+    public static HashMap<String, Game> games = new HashMap<>(); //map containing all games currently in play; in the main thread and public so that two clients can play the same game
 
-    private ServerSocket createSocket()
+    private static ServerSocket createSocket(int port)
     {
+
+        ServerSocket socket = null;
+
         try {
-            sock = new ServerSocket(); //basic try catch autorefractor; will probably change later
+            socket = new ServerSocket(port); //Server socket
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Cannot create server socket", e);
         }
 
-        return sock; //considered making this method create if sock == null and return; will look again
+        return socket;
     }
 
 
     public static void main(String[] args)
-    {   //empty dummy main
+    {
+
+        int port = 8000; //port is hardcoded, but put in a variable so it would be easy to change
+        ServerSocket sock = createSocket(port);
+
+        while(true)
+        {
+            Socket clientSock = null; //Setting up the client socket for accepting
+            try
+            {
+                clientSock = sock.accept(); //Listening
+            } catch(IOException e)
+            {
+                throw new RuntimeException("Cannot accept client", e);
+            }
+
+            new Thread(new ClientThread(clientSock)).start(); //When accepted new client, pass him over to a thread and go back to listening
+            System.out.println("Accepted new client!");
+        }
+
     }
 }
